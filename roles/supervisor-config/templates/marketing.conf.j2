@@ -1,0 +1,11 @@
+[program:marketing]
+command=php {{code_path}}/current/artisan queue:listen sqs --sleep=10 --quiet --timeout=2000 --memory=128 --tries=1 --queue="https://sqs.us-east-1.amazonaws.com/afdsfas/marketing"
+
+process_name=%(program_name)s_%(process_num)02d
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user={{remote_user}}
+numprocs=3
+stdout_logfile=/home/{{remote_user}}/.{{remote_user}}/marketing.log

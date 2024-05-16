@@ -1,0 +1,109 @@
+---
+- name: delete default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+# - name: delete nginx.conf
+#   file:
+#     path: /etc/nginx/nginx.conf
+#     state: absent
+
+- name: Write the nginx.conf
+  template: src=configs/nginx.conf.j2 dest=/etc/nginx/nginx.conf
+  notify: restart nginx
+
+- name: write the fastcgi_params
+  template: src=configs/fastcgi_params dest=/etc/nginx/fastcgi_params
+  notify: restart nginx
+
+- name: Write several configs
+  template: src="configs/{{item}}.j2" dest="/etc/nginx/conf.d/{{item}}"
+  with_items:
+    - cloudfare.conf
+    - gzip.conf
+    - uploads.conf
+  notify: restart nginx
+
+- name: "Write {{base_domain_name}} server block"
+  template:
+    src: sites/base-domain-name.j2
+    dest: "/etc/nginx/sites-available/{{base_domain_name}}"
+  notify: restart nginx
+
+- name: "Create a symbolic link for {{base_domain_name}}"
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{base_domain_name}}"
+    dest: "/etc/nginx/sites-enabled/{{base_domain_name}}"
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+    state: link
+  notify: restart nginx
+
+- name: "Write {{domain_name}} server block"
+  template:
+    src: "sites/domain-config.j2"
+    dest: "/etc/nginx/sites-available/{{domain_name}}"
+  notify: restart nginx
+
+- name: "Create a symbolic link for {{domain_name}}"
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{domain_name}}"
+    dest: "/etc/nginx/sites-enabled/{{domain_name}}"
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+    state: link
+  notify: restart nginx
+
+- name: create main dir
+  file:
+    path: "{{ code_path }}"
+    state: directory
+    group: "www-data"
+    owner: "{{remote_user}}"  
+
+- name: set permissions to main directory
+  command: "chmod g+s {{ code_path }}"
+  become: Yes
+  become_user: "{{remote_user}}"  
+
+- name: set permissions to main directory g+x
+  command: "chmod 755 {{ code_path }}"
+  become: Yes
+  become_user: "{{remote_user}}"    
+
+- name: create public dir
+  file:
+    path: "{{ code_path }}/public"
+    state: directory
+    group: "www-data"
+    owner: "{{remote_user}}"
+
+- name: create arisan mock dir
+  file:
+    path: "{{ code_path }}/artisan_current/public"
+    state: directory
+    group: ubuntu
+    recurse: true
+    owner: "{{ remote_user }}"
+
+- name: "Create a symbolic link for {{domain_name}}"
+  ansible.builtin.file:
+    src: "{{ code_path }}/artisan_current"
+    dest: "{{ code_path }}/current"
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+    state: link
+  notify: restart nginx
+
+- name: write index.html
+  template: src=index.html dest="{{ code_path }}/artisan_current/public/index.html"
+
+- name: mock artisan
+  template: src=artisan.j2 dest="{{ code_path }}/artisan_current/artisan"
+
+- name: Make artisan file executable
+  file:
+    path: "{{ code_path }}/current/artisan"
+    owner: "{{remote_user}}"
+    group: "{{remote_user}}"
+    mode: "+x"

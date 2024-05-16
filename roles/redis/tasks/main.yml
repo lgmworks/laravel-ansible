@@ -1,0 +1,24 @@
+---
+- name: apt update
+  apt:
+    update_cache: yes
+
+- name: install redis
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - redis-server
+    - redis-cli
+
+- name: Set supervised to systemd
+  ansible.builtin.lineinfile:
+    path: "/etc/redis/redis.conf"
+    regexp: "^supervised"
+    line: "supervised systemd"
+    state: present
+
+- name: Restart redis
+  service:
+    name: redis
+    state: restarted 

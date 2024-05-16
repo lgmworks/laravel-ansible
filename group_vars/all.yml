@@ -1,0 +1,20 @@
+---
+mariadb_version: "10.3"
+mariadb_repo: "deb [arch=amd64,i386,ppc64el] http://mirror.edatel.net.co/mariadb/repo/10.3/ubuntu xenial main"
+mariadb_repo_key_id: "0xF1656F24C74CD1D8"
+mariadb_root_password: "{{ secrets.DB_ROOT_PASSWORD }}"
+remote_user: ubuntu
+remote_group: www-data
+code_path: "/home/{{ remote_user }}/{{domain_name}}"
+ansible_python_interpreter: /usr/bin/python3
+php_version: 8.2
+upload_max_size: 30M
+admin_password: admin_password
+
+repo_url: git@github.com:exmaple/example.git
+
+root_password: "your_root_password"
+admin_user: forge
+db_name: app_db
+password_validation_policy: 1
+backup_file_name: 2024-04-14-23-07-20.sql

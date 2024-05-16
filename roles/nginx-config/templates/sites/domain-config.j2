@@ -1,0 +1,60 @@
+server {
+
+    listen 80;
+    listen [::]:80;
+    server_name {{domain_name}};
+    server_tokens off;
+    root {{ code_path }}/current/public;
+    charset utf-8;
+
+
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+
+    index index.html index.htm index.php;
+
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    access_log /var/log/nginx/{{domain_name}}-access.log;
+    error_log  /var/log/nginx/{{domain_name}}-error.log error;
+
+    error_page 404 /index.php;
+
+    # Media: images, icons, video, audio, HTC
+    location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc)$ {
+      expires 1M;
+      access_log off;
+      add_header Cache-Control "public";
+    }
+
+    # CSS and Javascript
+    location ~* \.(?:css|js)$ {
+      expires 1y;
+      access_log off;
+      add_header Cache-Control "public";
+    }
+
+
+    location ~ \.php$ {
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/run/php/php{{ php_version }}-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_index index.php;
+        include fastcgi_params;
+    }
+
+
+    location ~ /\.ht {
+        deny all;
+    }
+
+}

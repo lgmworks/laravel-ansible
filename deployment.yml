@@ -1,0 +1,7 @@
+---
+- name: Provision Server
+  hosts: server
+  become: Yes
+  remote_user: ubuntu
+  roles:
+    - { role: code, when: True }

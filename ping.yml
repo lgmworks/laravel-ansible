@@ -1,0 +1,8 @@
+---
+- name: provision server
+  hosts: server
+  become: Yes
+  remote_user: ubuntu
+  tasks:
+    - name: Ping the server
+      ansible.builtin.ping:

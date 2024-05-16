@@ -1,0 +1,26 @@
+---
+# Run this way:
+# ansible-playbook graviton.yml -e "step=provision"
+# ansible-playbook graviton.yml -e "step=config"
+# ansible-playbook graviton.yml -e "step=finish"
+- name: Provision Server
+  hosts: server
+  become: Yes
+  remote_user: ubuntu
+  vars:
+    base_domain_name: example.com
+    main_domain_name: www.example.com
+    enviroment: production
+  roles:
+    - { role: prerequisites, when: step === "provision" }
+    - { role: php, when: step === "provision" }
+    - { role: node, when: step === "provision" }
+    - { role: redis, when: step === "provision" }
+    - { role: nginx, when: step === "provision" }
+    - { role: supervisor, when: step === "provision" }
+    - { role: mysql, when: step === "provision" }
+    - { role: nginx-config, when: step === "config" }
+    - { role: mysql-restore, when: step === "config" }
+    - { role: supervisor-config, when: step === "finish" }
+    - { role: crontab, when: step === "finish" }
+

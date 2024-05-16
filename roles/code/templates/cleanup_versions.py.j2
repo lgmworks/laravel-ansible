@@ -1,0 +1,23 @@
+import os
+import shutil
+
+def keep_youngest_directories(path, keep_count=5):
+    # List all directories in the specified path
+    directories = [os.path.join(path, d) for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+
+    # Sort directories by modification time (youngest first)
+    directories.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
+    # Determine directories to remove
+    directories_to_remove = directories[keep_count:]
+
+    # Remove older directories
+    for directory in directories_to_remove:
+        try:
+            shutil.rmtree(directory)  # Recursively delete directory
+            print(f"Deleted {directory}")
+        except Exception as e:
+            print(f"Failed to delete {directory}: {str(e)}")
+
+# Call the function
+keep_youngest_directories(path="{{code_path}}/versions")

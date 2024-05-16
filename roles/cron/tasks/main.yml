@@ -1,0 +1,6 @@
+---
+- name: laravel cron
+  cron:
+    name: laravel scheduler
+    job: "/usr/bin/php {{ code_path }}/artisan schedule:run >> /dev/null 2>&1"
+    user: "{{ remote_user }}"

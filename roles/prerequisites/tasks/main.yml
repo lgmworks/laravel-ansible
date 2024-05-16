@@ -1,0 +1,40 @@
+---
+- name: copy id_rsa
+  copy:
+    src: ./secrets/id_rsa
+    dest: "/home/{{ remote_user }}/.ssh/id_rsa"
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+    mode: 0600
+
+- name: apt update
+  apt:
+    update_cache: yes
+
+- name: install prerequisites packages
+  apt: name={{item}}
+  with_items:
+    - python3-pip
+    - python3-mysqldb
+    - software-properties-common
+    - unzip
+
+- name: Create the provision directory
+  ansible.builtin.file:
+    path: /home/{{ remote_user }}/provision
+    state: directory
+    recurse: yes
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+
+- name: Install AWS Cli
+  shell:
+    chdir: "/home/{{ remote_user }}/provision"
+    creates: awscli_installed.txt
+    cmd: "{{ item }}"
+  become: Yes
+  with_items:
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    - unzip awscliv2.zip
+    - ./aws/install --update
+    - touch awscli_installed.txt

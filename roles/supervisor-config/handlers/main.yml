@@ -1,0 +1,4 @@
+---
+- name: Restart supervisor
+  become: Yes
+  shell: "supervisorctl reread && supervisorctl update"

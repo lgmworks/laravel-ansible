@@ -1,0 +1,16 @@
+---
+- name: Install nodejs
+  shell:
+    cmd: "{{item}}"
+    chdir: "/home/{{remote_user}}/provision"
+    creates: "000-node-intalled.txt"
+  become: yes
+  become_user: "{{remote_user}}"
+  with_items:
+    - "wget https://nodejs.org/dist/latest-v21.x/node-v21.7.3-linux-arm64.tar.gz"
+    - "tar -xvzf node-v21.7.3-linux-arm64.tar.gz"
+    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/node /usr/bin/node"
+    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/npm /usr/bin/npm"
+    - "npm install --global yarn"
+    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/yarn /usr/bin/yarn"
+    - "touch 000-node-intalled.txt"

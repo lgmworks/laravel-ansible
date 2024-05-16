@@ -1,0 +1,184 @@
+---
+- name: Generate code directory name prefix
+  command:
+    cmd: date +"%Y-%m-%d_%H-%M-%S"
+  register: date_prefix_output
+
+- name: Setting date_prefix variable
+  ansible.builtin.set_fact:
+    date_prefix: "{{date_prefix_output['stdout']}}"
+
+- name: Create the versions directory
+  ansible.builtin.file:
+    path: "{{code_path}}/versions"
+    state: directory
+    recurse: yes
+    owner: "{{remote_user}}"
+    group: "ubuntu"
+
+- name: delete current directory
+  ansible.builtin.file:
+    path: "{{code_path}}/versions/current"
+    state: absent
+
+- name: clone the repo
+  git:
+    repo: "{{repo_url}}"
+    dest: "{{ code_path }}/versions/current"
+    version: "main"
+    accept_hostkey: yes
+  become_user: "{{ remote_user }}"
+  become: yes
+
+- name: Extract hash
+  command:
+    cmd: git log -n 1 --format="%h"
+    chdir: "{{code_path}}/versions/current"
+  register: hash_output
+
+- name: Setting commit_hash variable
+  ansible.builtin.set_fact:
+    commit_hash: "{{hash_output['stdout']}}"
+
+- name: Setting host facts using complex arguments
+  ansible.builtin.set_fact:
+    current_path: "{{code_path}}/versions/{{date_prefix}}_{{commit_hash}}"
+
+- debug: var=commit_hash
+
+- name: delete current hash directory
+  ansible.builtin.file:
+    path: "{{current_path}}"
+    state: absent
+
+- name: Rename current to hash
+  shell: "mv {{code_path}}/versions/current {{current_path}}"
+  become_user: "{{remote_user}}"
+
+- name: copy the punto env
+  template:
+    src: punto_env.j2
+    dest: "{{code_path}}/.env"
+    force: false
+    owner: "{{ remote_user }}"
+    group: ubuntu
+
+- name: Create symlink to the .env
+  ansible.builtin.file:
+    src: "{{ code_path }}/.env"
+    dest: "{{ current_path }}/.env"
+    state: link
+  become_user: "{{ remote_user }}"
+  become: yes
+
+- name: copy the cleanup script
+  template:
+    src: cleanup_versions.py.j2
+    dest: "{{code_path}}/versions/cleanup_versions.py"
+    owner: "{{ remote_user }}"
+    group: www-data
+
+- name: composer install
+  command:
+    cmd: composer install
+    chdir: "{{ current_path }}"
+  become_user: "{{ remote_user }}"
+  become: no
+
+- name: yarn install
+  command:
+    cmd: yarn
+    chdir: "{{ current_path }}"
+  become_user: "{{ remote_user }}"
+  become: no
+
+- name: npm install
+  command:
+    cmd: npm i
+    chdir: "{{ current_path }}/resources/js/svelte"
+  become_user: "{{ remote_user }}"
+  become: no
+
+- name: npm svelte build
+  command:
+    cmd: npm run build
+    chdir: "{{ current_path }}/resources/js/svelte"
+  become_user: "{{ remote_user }}"
+  become: no
+
+- name: npm main build
+  command:
+    cmd: yarn prod
+    chdir: "{{ current_path }}"
+  become_user: "{{ remote_user }}"
+  become: no
+
+- name: upload assets to s3
+  command:
+    cmd: "{{item}}"
+    chdir: "{{ current_path }}"
+  with_items:
+    - aws s3 sync public/assets s3://static.example.com/assets --cache-control="max-age=31557600" --expires="2034-01-01T00:00:00Z"
+    - aws s3 sync public/images s3://static.example.com/images --cache-control="max-age=31557600" --expires="2034-01-01T00:00:00Z"
+  
+
+- name: Add user ubuntu to www-data
+  user:
+    name: ubuntu
+    groups: www-data
+    append: yes
+
+
+
+- name: set code directory permissions
+  command: "{{ item }}"
+  args:
+    chdir: "{{current_path}}"
+  become: yes
+  with_items:
+    - "git config core.fileMode false"
+    - "usermod -a -G {{remote_user}} {{ remote_user }}"
+    - "chown -R {{remote_user}}:{{remote_user}} {{ current_path }}"
+    - "find {{ current_path }} -type f -exec chmod 664 {} \\;"
+    - "find {{ current_path }} -type d -exec chmod 755 {} \\;"
+    - "chown -R {{remote_user}}:{{remote_user}} {{ current_path }}"
+    - "chgrp -R {{remote_user}} storage bootstrap/cache"
+    - "chmod -R ug+rwx storage bootstrap/cache"
+
+- name: migrations and database state
+  command:
+    cmd: "{{item}}"
+    chdir: "{{ current_path }}"
+  with_items:
+    - php artisan migrate --force
+    - php artisan ensure-database-state-is-loaded
+
+- name: Create symlink to the commit directory
+  ansible.builtin.file:
+    src: "{{ current_path }}"
+    dest: "{{ code_path }}/current"
+    state: link
+    force: yes
+    owner: "ubuntu"
+    group: ubuntu
+  become: no  
+
+- name: queue restart and notify deploy
+  command:
+    cmd: "{{item}}"
+    chdir: "{{ current_path }}"
+  with_items:
+    - sudo service nginx reload
+    - php artisan optimize 
+    - php artisan queue:restart 
+    - php artisan forget:version 
+    - "sudo service php{{php_version}}-fpm reload"
+    - sudo supervisorctl restart all 
+    - aws cloudfront create-invalidation --distribution-id E3D2SIBUBHUTV2 --paths  "/*"  
+#    - 'aws sns publish --topic-arn "arn:aws:sns:us-east-1:347549498311:deploy"  --subject "deploy example.com $(date +%Y-%m-%d)" --message "DEPLOY: $(cat commit)" --region us-east-1'
+
+- name: cleanup oldesct versions
+  shell:
+    chdir: "{{ code_path }}/versions"
+    cmd: "python3 cleanup_versions.py"
+  become: no

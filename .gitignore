@@ -1,0 +1,4 @@
+vendor/*
+inventory.ini
+todo
+.DS_Store

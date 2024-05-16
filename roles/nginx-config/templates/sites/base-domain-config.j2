@@ -1,0 +1,11 @@
+server {
+   listen         80 default_server;
+   server_name    {{ base_domain_name }};
+   return         301 https://{{ main_domain_name }}$request_uri;
+}
+
+server {
+    listen 80;
+    server_name _;
+    return 301 https://{{ main_domain_name }}$request_uri;
+}

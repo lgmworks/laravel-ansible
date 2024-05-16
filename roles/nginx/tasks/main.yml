@@ -1,0 +1,54 @@
+---
+- name: apt update
+  apt:
+    update_cache: yes
+  become: yes  
+
+- name: Stop Apache2 service if it's running
+  service:
+    name: apache2
+    state: stopped
+    enabled: false
+  ignore_errors: True # Ignore errors if the service is not running
+
+- name: Remove Apache2 service
+  service:
+    name: apache2
+    enabled: false
+
+- name: Remove Apache2 package
+  apt:
+    name: apache2
+    state: absent
+
+- name: install coreutils
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - coreutils
+
+- name: Create the keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    recurse: yes
+
+- name: Use wget command to download the key
+  shell:
+    cmd: wget -qO - https://nginx.org/packages/keys/nginx_signing.key | sudo tee /etc/apt/keyrings/nginx_signing.key
+    chdir: /etc/apt/keyrings
+    creates: nginx_signing.key
+
+- name: apt update
+  apt:
+    update_cache: yes
+  become: yes  
+
+- name: install nginx and modules
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - nginx
+    - libnginx-mod-*

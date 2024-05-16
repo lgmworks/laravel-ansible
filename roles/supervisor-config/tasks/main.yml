@@ -1,0 +1,17 @@
+---
+- name: Create supervisor log directory
+  file:
+    path: "/home/{{remote_user}}/.{{remote_user}}"
+    state: directory
+    group: "{{remote_user}}"
+    owner: "{{ remote_user }}"
+
+- name: Copy supervisor config file
+  template:
+    src: "{{item}}.j2"
+    dest: "/etc/supervisor/conf.d/{{item}}"
+  with_items:
+    - default.conf
+    - payments.conf
+    - marketing.conf
+  notify: Restart supervisor

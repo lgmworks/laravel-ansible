@@ -1,0 +1,123 @@
+---
+- name: add php repository
+  apt_repository:
+    repo: ppa:ondrej/php
+
+- name: apt update
+  apt:
+    update_cache: yes
+
+- name: install php
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - build-essential
+    - software-properties-common
+    - git
+    - imagemagick
+    - imagemagick-doc
+    - "php{{php_version}}-common"
+    - "php{{php_version}}-common"
+    - "php{{php_version}}-imagick"
+    - "php-pear"
+    - "php{{php_version}}"
+    - "php{{php_version}}-cli"
+    - "php{{php_version}}-common"
+    - "php{{php_version}}-curl"
+    - "php{{php_version}}-dev"
+    - "php{{php_version}}-fpm"
+    - "php{{php_version}}-mbstring"
+    - "php{{php_version}}-mysql"
+    - "php{{php_version}}-opcache"
+    - "php{{php_version}}-readline"
+    - "php{{php_version}}-xdebug"
+    - "php{{php_version}}-sqlite3"
+    - "php{{php_version}}-zip"
+    - "php{{php_version}}-xml"
+    - "php{{php_version}}-bcmath"
+    - sqlite3
+
+- name: install composer
+  shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer creates=/usr/local/bin/composer
+  become: Yes
+
+- name: make composer executable
+  file:
+    path: /usr/local/bin/composer
+    mode: "+x"
+
+- name: Establecer upload_max_filesize en php.ini
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/php.ini"
+    regexp: "^upload_max_filesize ="
+    line: "upload_max_filesize = {{ upload_max_size }}"
+    state: present
+  notify: restart php-fpm
+
+- name: Establecer post_max_size en php.ini
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/php.ini"
+    regexp: "^post_max_size ="
+    line: "post_max_size = {{ upload_max_size }}"
+    state: present
+  notify: restart php-fpm
+
+- name: Establecer memory_limit en php.ini
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/php.ini"
+    regexp: "^memory_limit ="
+    line: "memory_limit = {{ memory_limit }}"
+    state: present
+  notify: restart php-fpm
+
+- name: Set user in pool.d/www.conf
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/pool.d/www.conf"
+    regexp: "^user ="
+    line: "user = {{remote_user}}"
+    state: present
+  notify: restart php-fpm
+
+- name: Set group in pool.d/www.conf
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/pool.d/www.conf"
+    regexp: "^group ="
+    line: "group = {{remote_user}}"
+    state: present
+  notify: restart php-fpm
+
+- name: Set listen.group in pool.d/www.conf
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/pool.d/www.conf"
+    regexp: "^listen.group ="
+    line: "listen.group = www-data"
+    state: present
+  notify: restart php-fpm
+
+- name: Set listen.owner in pool.d/www.conf
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/pool.d/www.conf"
+    regexp: "^listen.owner ="
+    line: "listen.owner = www-data"
+    state: present
+  notify: restart php-fpm  
+
+- name: Set listen.mode in pool.d/www.conf
+  ansible.builtin.lineinfile:
+    path: "/etc/php/{{php_version}}/fpm/pool.d/www.conf"
+    regexp: "^listen.mode ="
+    line: "listen.mode = 0660"
+    state: present
+  notify: restart php-fpm  
+
+
+# - name: configure php to liston for tcp 9000 port
+#   shell: sed -i '/listen =/c\listen = 0.0.0.0:9000' /etc/php/{{php_version}}/fpm/pool.d/www.conf
+#   become: yes
+
+- name: start php-fpm{{php_version}}
+  service:
+    name: php{{php_version}}-fpm
+    state: started
+    enabled: yes

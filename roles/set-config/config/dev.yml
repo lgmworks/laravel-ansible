@@ -1,0 +1,10 @@
+---
+STATIC_DNS: https://s3.amazonaws.com/static-dev.example.com
+S3-BUCKET: example-dev
+MIX_URL: ''
+STATIC_DNS_ASSETS: ''
+S3-STATIC-BUCKET: static-dev.example.com
+S3-PRIVATE-BUCKET: private-dev.example.com
+S3_STATIC_BUCKET_URL: https://s3.amazonaws.com/static-dev.example.com
+QUEUE_DRIVER: sync
+SQS_QUEUE: https://sqs.us-east-1.amazonaws.com/3241324123/example-dev

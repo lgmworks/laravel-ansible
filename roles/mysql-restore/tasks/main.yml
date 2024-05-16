@@ -1,0 +1,17 @@
+---
+- name: Download database backup
+  shell:
+    cmd: "aws s3 cp s3://example-mysql/{{ backup_file_name }} ./"
+    chdir: "/home/{{ remote_user }}/provision"
+    creates: "{{ backup_file_name }}"
+
+- name: Restores database backup
+  shell:
+    cmd: "{{item}}"
+    chdir: "/home/{{ remote_user }}/provision"
+    creates: "restored_db.txt"
+  environment:
+    MYSQL_PWD: "{{ admin_password }}"
+  with_items:
+    - "mysql -u forge < {{ backup_file_name }} && touch restored.txt"
+    - "touch restored_db.txt"
