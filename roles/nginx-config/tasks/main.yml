@@ -26,9 +26,10 @@
 
 - name: "Write {{base_domain_name}} server block"
   template:
-    src: sites/base-domain-name.j2
+    src: sites/base-domain-config.j2
     dest: "/etc/nginx/sites-available/{{base_domain_name}}"
   notify: restart nginx
+  when: base_domain_name
 
 - name: "Create a symbolic link for {{base_domain_name}}"
   ansible.builtin.file:
@@ -38,10 +39,11 @@
     group: "{{ remote_user }}"
     state: link
   notify: restart nginx
+  when: base_domain_name
 
 - name: "Write {{domain_name}} server block"
   template:
-    src: "sites/domain-config.j2"
+    src: sites/main-domain-config.j2
     dest: "/etc/nginx/sites-available/{{domain_name}}"
   notify: restart nginx
 
@@ -78,11 +80,11 @@
     group: "www-data"
     owner: "{{remote_user}}"
 
-- name: create arisan mock dir
+- name: create artisan mock dir
   file:
     path: "{{ code_path }}/artisan_current/public"
     state: directory
-    group: ubuntu
+    group: "{{remote_user}}"
     recurse: true
     owner: "{{ remote_user }}"
 

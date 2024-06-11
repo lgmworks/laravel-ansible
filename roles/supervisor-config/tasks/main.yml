@@ -1,17 +1,24 @@
 ---
+- name: Get the configuration files list
+  become: false
+  shell:
+    cmd: "find  roles/supervisor-config/templates -type f"
+  delegate_to: 127.0.0.1
+  register: config_files
+
+- debug:
+    var: config_files['stdout_lines']
+
 - name: Create supervisor log directory
   file:
-    path: "/home/{{remote_user}}/.{{remote_user}}"
+    path: "/home/{{ remote_user }}/.{{ remote_user }}"
     state: directory
-    group: "{{remote_user}}"
+    group: "{{ remote_user }}"
     owner: "{{ remote_user }}"
 
 - name: Copy supervisor config file
   template:
-    src: "{{item}}.j2"
-    dest: "/etc/supervisor/conf.d/{{item}}"
-  with_items:
-    - default.conf
-    - payments.conf
-    - marketing.conf
+    src: "../templates/{{ item | basename }}"
+    dest: "/etc/supervisor/conf.d/{{ item | basename | replace('.conf.j2', '') }}.conf"
+  with_items: "{{ config_files['stdout_lines'] }}"
   notify: Restart supervisor

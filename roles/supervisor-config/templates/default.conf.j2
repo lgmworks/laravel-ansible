@@ -1,5 +1,5 @@
 [program:default]
-command=php {{code_path}}/current/artisan queue:listen sqs --sleep=10 --quiet --timeout=1000 --memory=128 --tries=1
+command=php {{code_path}}/current/artisan queue:listen --sleep=10 --quiet --timeout=1000 --memory=128 --tries=1
 
 process_name=%(program_name)s_%(process_num)02d
 autostart=true

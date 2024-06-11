@@ -1,5 +1,5 @@
 ---
-- name: copy id_rsa
+- name: "copy id_rsa, the one used in the deployment keys in the code repository"
   copy:
     src: ./secrets/id_rsa
     dest: "/home/{{ remote_user }}/.ssh/id_rsa"

@@ -1,9 +1,19 @@
 ---
 - name: Download database backup
   shell:
-    cmd: "aws s3 cp s3://example-mysql/{{ backup_file_name }} ./"
+    cmd: "aws s3 cp s3://{{mysql_backups_bucket}}/{{ backup_file_name }} ./"
     chdir: "/home/{{ remote_user }}/provision"
     creates: "{{ backup_file_name }}"
+  when: backup_location == 's3'
+
+- name: "Copy a local db backup to server"
+  copy:
+    src: "./secrets/{{backup_file_name}}"
+    dest: "/home/{{ remote_user }}/provision/{{backup_file_name}}"
+    owner: "{{ remote_user }}"
+    group: "{{ remote_user }}"
+    mode: 0600
+  when: backup_location == 'local'
 
 - name: Restores database backup
   shell:
@@ -13,5 +23,6 @@
   environment:
     MYSQL_PWD: "{{ admin_password }}"
   with_items:
-    - "mysql -u forge < {{ backup_file_name }} && touch restored.txt"
+    - "mysql -u {{admin_user}} < {{ backup_file_name }} && touch restored.txt"
     - "touch restored_db.txt"
+  when: restore_backup

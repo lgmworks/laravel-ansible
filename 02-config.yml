@@ -1,0 +1,8 @@
+---
+- name: Config server
+  hosts: server
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - { role: nginx-config }
+    - { role: mysql-restore }

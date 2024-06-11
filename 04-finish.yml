@@ -1,0 +1,8 @@
+---
+- name: Finish Server
+  hosts: server
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - { role: supervisor-config }
+    - { role: cron }

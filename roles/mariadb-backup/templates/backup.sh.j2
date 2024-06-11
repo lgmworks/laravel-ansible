@@ -1,5 +1,0 @@
-#!/bin/sh
-export MYSQL_PWD={{ secreMts.DB_ROOT_PASSWORD }}
-filename=$(date +%Y-%m-%d-%H-%M-%S) 
-/usr/bin/mysqldump  -u root  app_db > /home/{{ remote_user }}/backups/$filename.sql
-/usr/local/bin/aws s3 mv /home/{{ remote_user }}/backups/$filename.sql s3://backups-mysql/  --region us-east-1 --profile s3mysql

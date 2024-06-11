@@ -1,6 +1,6 @@
-- name: Set timezone to America/Bogota
+- name: "Set timezone to {{timezone}}"
   community.general.timezone:
-    name: America/Bogota
+    name: "{{timezone}}"
 
 - name: Update apt cache
   apt:
@@ -12,8 +12,7 @@
     state: present
     update_cache: yes
   loop:
-    - mysql-server
-    - mysql-client
+    - mysql-server-8.0
     - python3-mysqldb
     - libmysqlclient-dev
   become: yes

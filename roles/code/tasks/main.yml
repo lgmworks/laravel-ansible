@@ -14,7 +14,7 @@
     state: directory
     recurse: yes
     owner: "{{remote_user}}"
-    group: "ubuntu"
+    group: "{{remote_user}}"
 
 - name: delete current directory
   ansible.builtin.file:
@@ -55,13 +55,13 @@
   shell: "mv {{code_path}}/versions/current {{current_path}}"
   become_user: "{{remote_user}}"
 
-- name: copy the punto env
+- name: Copy .env, only first time
   template:
     src: punto_env.j2
     dest: "{{code_path}}/.env"
     force: false
     owner: "{{ remote_user }}"
-    group: ubuntu
+    group: "{{ remote_user }}"
 
 - name: Create symlink to the .env
   ansible.builtin.file:
@@ -85,52 +85,31 @@
   become_user: "{{ remote_user }}"
   become: no
 
-- name: yarn install
+- name: npm run install
   command:
-    cmd: yarn
+    cmd: npm i
     chdir: "{{ current_path }}"
   become_user: "{{ remote_user }}"
   become: no
 
-- name: npm install
-  command:
-    cmd: npm i
-    chdir: "{{ current_path }}/resources/js/svelte"
-  become_user: "{{ remote_user }}"
-  become: no
-
-- name: npm svelte build
-  command:
-    cmd: npm run build
-    chdir: "{{ current_path }}/resources/js/svelte"
-  become_user: "{{ remote_user }}"
-  become: no
 
 - name: npm main build
   command:
-    cmd: yarn prod
+    cmd: npm run build
     chdir: "{{ current_path }}"
   become_user: "{{ remote_user }}"
   become: no
 
-- name: upload assets to s3
-  command:
-    cmd: "{{item}}"
-    chdir: "{{ current_path }}"
-  with_items:
-    - aws s3 sync public/assets s3://static.example.com/assets --cache-control="max-age=31557600" --expires="2034-01-01T00:00:00Z"
-    - aws s3 sync public/images s3://static.example.com/images --cache-control="max-age=31557600" --expires="2034-01-01T00:00:00Z"
-  
 
 - name: Add user ubuntu to www-data
   user:
-    name: ubuntu
+    name: "{{remote_user}}"
     groups: www-data
     append: yes
 
 
 
-- name: set code directory permissions
+- name: Set code directory permissions
   command: "{{ item }}"
   args:
     chdir: "{{current_path}}"
@@ -145,13 +124,13 @@
     - "chgrp -R {{remote_user}} storage bootstrap/cache"
     - "chmod -R ug+rwx storage bootstrap/cache"
 
-- name: migrations and database state
+- name: Migrations and database state
   command:
     cmd: "{{item}}"
     chdir: "{{ current_path }}"
   with_items:
     - php artisan migrate --force
-    - php artisan ensure-database-state-is-loaded
+#    - php artisan ensure-database-state-is-loaded
 
 - name: Create symlink to the commit directory
   ansible.builtin.file:
@@ -163,21 +142,18 @@
     group: ubuntu
   become: no  
 
-- name: queue restart and notify deploy
+- name: Queue restart and notify deploy
   command:
     cmd: "{{item}}"
     chdir: "{{ current_path }}"
   with_items:
     - sudo service nginx reload
     - php artisan optimize 
-    - php artisan queue:restart 
-    - php artisan forget:version 
+    - php artisan queue:restart
     - "sudo service php{{php_version}}-fpm reload"
     - sudo supervisorctl restart all 
-    - aws cloudfront create-invalidation --distribution-id E3D2SIBUBHUTV2 --paths  "/*"  
-#    - 'aws sns publish --topic-arn "arn:aws:sns:us-east-1:347549498311:deploy"  --subject "deploy example.com $(date +%Y-%m-%d)" --message "DEPLOY: $(cat commit)" --region us-east-1'
 
-- name: cleanup oldesct versions
+- name: Cleanup oldest versions
   shell:
     chdir: "{{ code_path }}/versions"
     cmd: "python3 cleanup_versions.py"

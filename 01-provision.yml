@@ -1,0 +1,14 @@
+---
+- name: Provision Server
+  hosts: server
+  become: yes
+  remote_user: ubuntu
+  roles:
+    - { role: prerequisites }
+    - { role: php }
+    - { role: node }
+    - { role: redis }
+    - { role: nginx }
+    - { role: supervisor }
+    - { role: mysql }
+

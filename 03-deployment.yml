@@ -3,5 +3,6 @@
   hosts: server
   become: Yes
   remote_user: ubuntu
+  gather_facts: no
   roles:
     - { role: code, when: True }
