@@ -2,7 +2,7 @@
 - name: Provision Server
   hosts: server
   become: yes
-  remote_user: ubuntu
+  remote_user: "{{remote_user}}"
   roles:
     - { role: prerequisites }
     - { role: php }

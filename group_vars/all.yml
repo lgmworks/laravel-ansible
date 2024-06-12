@@ -20,7 +20,7 @@ mysql_backups_bucket: mysql-backup-example
 backup_file_name: backup.sql
 #available values: s3, local
 backup_location: local
-restore_backup: Yes
+restore_backup: No
 
 base_domain_name:
 domain_name: deploy.lgmworks.com

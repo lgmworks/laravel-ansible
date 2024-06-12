@@ -1,9 +1,0 @@
----
-- "Backup de la base de datos, hacer descargar y subir"
-- "Copiar el .env"
-- "modificar el .env"
-- "Configuración de nginx"
-- "Deploy script modificaciones"
-- "Configuraciones de colas"
-- "Configuración del scheduler"
-- "Restaurar db a mano en table plus"

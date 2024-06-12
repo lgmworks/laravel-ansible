@@ -2,7 +2,7 @@
 - name: Finish Server
   hosts: server
   become: yes
-  remote_user: ubuntu
+  remote_user: "{{remote_user}}"
   roles:
     - { role: supervisor-config }
     - { role: cron }
