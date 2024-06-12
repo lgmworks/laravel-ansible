@@ -1,7 +1,7 @@
 ---
 - name: "copy id_rsa, the one used in the deployment keys in the code repository"
   copy:
-    src: ./secrets/id_rsa
+    src: ./secrets/deploy_key
     dest: "/home/{{ remote_user }}/.ssh/id_rsa"
     owner: "{{ remote_user }}"
     group: "{{ remote_user }}"
