@@ -19,6 +19,7 @@
 8. Create an RSA key pair with `ssh-keygen`, then add the public key to the repository deploy keys in the git server config.
 9. Place the private key in the included secrets directory.
 10. Copy the `.env` file into `roles/code/templates/punto_env.j2`.
+11. Configure your email for the ssl certificates in `group_vars/all.yml`
 
 ## Usage
 1. Run `ansible-playbook 01-provision.yml` in the terminal to install all the packages needed for a Laravel app.
