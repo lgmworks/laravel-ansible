@@ -25,12 +25,14 @@ sites:
     code_path: "/home/{{ remote_user }}/deploy.lgmworks.com"
     domain_name: deploy.lgmworks.com
     repo_url: git@github.com:luisgmoreno/laravel-ansible-blank-app.git
+    branch: develop
     # eg: my-site.com -> 301 -> www.my-site.com
     base_domain_name:
   site2:
     code_path: "/home/{{ remote_user }}/deploy2.lgmworks.com"
     domain_name: deploy2.lgmworks.com
     repo_url: git@github.com:luisgmoreno/laravel-ansible-blank-app.git
+    branch: staging
     base_domain_name:
 
 

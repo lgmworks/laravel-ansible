@@ -25,7 +25,7 @@
   git:
     repo: "{{sites[selected_site].repo_url}}"
     dest: "{{ sites[selected_site].code_path }}/versions/current"
-    version: "main"
+    version: "{{ sites[selected_site].branch }}"
     accept_hostkey: yes
   become_user: "{{ remote_user }}"
   become: yes
