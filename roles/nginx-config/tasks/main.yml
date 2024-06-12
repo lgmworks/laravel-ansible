@@ -94,7 +94,7 @@
   file:
     path: "{{ sites[item].code_path }}/public"
     state: directory
-    group: "www-data"
+    group: "{{remote_user}}"
     owner: "{{remote_user}}"
   with_items: "{{sites}}"
 
@@ -109,15 +109,17 @@
 
 - name: "Create a temporal symbolic link for {{sites[item].domain_name}}"
   ansible.builtin.shell:
-    cmd: "ls {{ sites[item].code_path }}/current 2> /dev/null || ls -s {{ sites[item].code_path }}/artisan_current {{ sites[item].code_path }}/current"
+    cmd: "ln -s {{ sites[item].code_path }}/artisan_current {{ sites[item].code_path }}/current"
   notify: restart nginx
+  become: yes
   with_items: "{{sites}}"
+  ignore_errors: yes
 
 - name: "write index.html in {{sites[item].code_path}}"
   template:
     src: index.html
     dest: "{{ sites[item].code_path }}/artisan_current/public/index.html"
-  with_items: "{{sites}}"
+  with_items: "{{sites}}" 
 
 - name: mock artisan
   template:

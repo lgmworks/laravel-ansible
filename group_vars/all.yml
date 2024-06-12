@@ -17,22 +17,22 @@ restore_backup: No
 backup_file_name: backup.sql
 restore_db: No
 
-certs_email: you@example.com
+certs_email: lgm@lgmworks.com
 
 selected_site: site1
 sites:
-  site1:
-    code_path: "/home/{{ remote_user }}/develop.example.com"
-    domain_name: develop.example.com
-    repo_url: git@github.com:taylor/your-app.git
+  develop:
+    code_path: "/home/{{ remote_user }}/develop.lgmworks.com"
+    domain_name: develop.lgmworks.com
+    repo_url: git@github.com:lgmworks/laravel-ansible-blank-app.git
     branch: develop
     # eg: my-site.com -> 301 -> www.my-site.com
     base_domain_name:
-  site2:
-    code_path: "/home/{{ remote_user }}/staging.example.com"
-    domain_name: staging.example.com
-    repo_url: git@github.com:taylor/your-app.git
-    branch: staging
+  prod:
+    code_path: "/home/{{ remote_user }}/prod.lgmworks.com"
+    domain_name: prod.lgmworks.com
+    repo_url: git@github.com:lgmworks/laravel-ansible-blank-app.git
+    branch: main
     base_domain_name:
 
 
