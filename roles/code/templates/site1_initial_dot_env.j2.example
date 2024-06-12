@@ -1,0 +1,7 @@
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:HDj8NndiQufDpVU4VeCEQa3HruDYoSRnYVyftnXEAcI=
+APP_DEBUG=true
+APP_TIMEZONE=UTC
+APP_URL=http://laravel-ansible-blank-app.test
+#and so on...
