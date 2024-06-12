@@ -1,28 +1,44 @@
 ---
-mariadb_version: "10.3"
 remote_user: ubuntu
 remote_group: www-data
-code_path: "/home/{{ remote_user }}/{{domain_name}}"
 ansible_python_interpreter: /usr/bin/python3
 php_version: 8.3
 upload_max_size: 30M
+
 admin_password: admin_password
-
-repo_url: git@github.com:luisgmoreno/laravel-ansible-blank-app.git
-
 root_password: "your_root_password"
 admin_user: forge
-db_name: app_db
 password_validation_policy: 1
 timezone: Etc/UTC
-
 mysql_backups_bucket: mysql-backup-example
-backup_file_name: backup.sql
 #available values: s3, local
 backup_location: local
 restore_backup: No
+backup_file_name: backup.sql
+restore_db: No
 
-base_domain_name:
-domain_name: deploy.lgmworks.com
-enviroment: production
+certs_email: you@example.com
+
+selected_site: site1
+sites:
+  site1:
+    code_path: "/home/{{ remote_user }}/deploy.lgmworks.com"
+    domain_name: deploy.lgmworks.com
+    repo_url: git@github.com:luisgmoreno/laravel-ansible-blank-app.git
+    # eg: my-site.com -> 301 -> www.my-site.com
+    base_domain_name:
+  site2:
+    code_path: "/home/{{ remote_user }}/deploy2.lgmworks.com"
+    domain_name: deploy2.lgmworks.com
+    repo_url: git@github.com:luisgmoreno/laravel-ansible-blank-app.git
+    base_domain_name:
+
+
+
+
+
+
+
+
+
 

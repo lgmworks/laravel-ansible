@@ -38,3 +38,49 @@
     - unzip awscliv2.zip
     - ./aws/install --update
     - touch awscli_installed.txt
+
+- name: Install cerbot with options
+  community.general.snap:
+    name: certbot
+    classic: true
+
+- name: Create symbolic links for certbot
+  file:
+    src: /snap/bin/certbot
+    dest: "{{ item }}"
+    state: link
+    force: no
+  with_items:
+    - /usr/local/bin/certbot
+    - /usr/bin/certbot
+
+
+- name: Register certbot
+  shell: |
+    certbot -n register --agree-tos --email {{certs_email}}
+    touch /etc/letsencrypt/.registered
+  args:
+    creates: /etc/letsencrypt/.registered
+  tags:
+    - nginx
+    - certbot
+    -
+- name: Setup cronjob for renewal
+  cron:
+    name: certbot-renewal
+    job: "/bin/bash -lc '/usr/local/bin/certbot -q renew'"
+    minute: "0"
+    hour: "14"
+  tags:
+    - nginx
+    - certbot
+    -
+- name: Setup cronjob for renewal
+  cron:
+    name: certbot-renewal
+    job: "/bin/bash -lc '/usr/local/bin/certbot -q renew'"
+    minute: "0"
+    hour: "14"
+  tags:
+    - nginx
+    - certbot

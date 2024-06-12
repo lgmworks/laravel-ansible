@@ -24,88 +24,111 @@
     - uploads.conf
   notify: restart nginx
 
-- name: "Write {{base_domain_name}} server block"
+- name: 'Get certificate'
+  command: '/snap/bin/certbot -n --nginx certonly -d {{sites[item].domain_name}}'
+  args:
+    creates: '/etc/letsencrypt/live/{{sites[item].domain_name}}'
+  ignore_errors: no
+  with_items: "{{sites}}"
+  tags:
+    - nginx
+    - certbot
+
+- name: "Write {{sites[item].base_domain_name}} server block"
   template:
     src: sites/base-domain-config.j2
-    dest: "/etc/nginx/sites-available/{{base_domain_name}}"
+    dest: "/etc/nginx/sites-available/{{sites[item].base_domain_name}}"
   notify: restart nginx
-  when: base_domain_name
+  when: sites[item].base_domain_name
+  with_items: "{{sites}}"
 
-- name: "Create a symbolic link for {{base_domain_name}}"
+- name: "Create a symbolic link for {{sites[item].base_domain_name}}"
   ansible.builtin.file:
-    src: "/etc/nginx/sites-available/{{base_domain_name}}"
-    dest: "/etc/nginx/sites-enabled/{{base_domain_name}}"
+    src: "/etc/nginx/sites-available/{{sites[item].base_domain_name}}"
+    dest: "/etc/nginx/sites-enabled/{{sites[item].base_domain_name}}"
     owner: "{{ remote_user }}"
     group: "{{ remote_user }}"
     state: link
   notify: restart nginx
-  when: base_domain_name
+  when: sites[item].base_domain_name
+  with_items: "{{sites}}"
 
-- name: "Write {{domain_name}} server block"
+- name: "Write {{sites[item].domain_name}} server block"
   template:
     src: sites/main-domain-config.j2
-    dest: "/etc/nginx/sites-available/{{domain_name}}"
+    dest: "/etc/nginx/sites-available/{{sites[item].domain_name}}"
   notify: restart nginx
+  with_items: "{{sites}}"
 
-- name: "Create a symbolic link for {{domain_name}}"
+- name: "Create a symbolic link for {{sites[item].domain_name}}"
   ansible.builtin.file:
-    src: "/etc/nginx/sites-available/{{domain_name}}"
-    dest: "/etc/nginx/sites-enabled/{{domain_name}}"
+    src: "/etc/nginx/sites-available/{{sites[item].domain_name}}"
+    dest: "/etc/nginx/sites-enabled/{{sites[item].domain_name}}"
     owner: "{{ remote_user }}"
     group: "{{ remote_user }}"
     state: link
   notify: restart nginx
+  with_items: "{{sites}}"
 
 - name: create main dir
   file:
-    path: "{{ code_path }}"
-    state: directory
-    group: "www-data"
-    owner: "{{remote_user}}"  
-
-- name: set permissions to main directory
-  command: "chmod g+s {{ code_path }}"
-  become: Yes
-  become_user: "{{remote_user}}"  
-
-- name: set permissions to main directory g+x
-  command: "chmod 755 {{ code_path }}"
-  become: Yes
-  become_user: "{{remote_user}}"    
-
-- name: create public dir
-  file:
-    path: "{{ code_path }}/public"
+    path: "{{ sites[item].code_path }}"
     state: directory
     group: "www-data"
     owner: "{{remote_user}}"
+  with_items: "{{sites}}"
+
+- name: set permissions to main directory
+  command: "chmod g+s {{ sites[item].code_path }}"
+  become: Yes
+  become_user: "{{remote_user}}"
+  with_items: "{{sites}}"
+
+- name: set permissions to main directory g+x
+  command: "chmod 755 {{ sites[item].code_path }}"
+  become: Yes
+  become_user: "{{remote_user}}"
+  with_items: "{{sites}}"
+
+- name: create public dir
+  file:
+    path: "{{ sites[item].code_path }}/public"
+    state: directory
+    group: "www-data"
+    owner: "{{remote_user}}"
+  with_items: "{{sites}}"
 
 - name: create artisan mock dir
   file:
-    path: "{{ code_path }}/artisan_current/public"
+    path: "{{ sites[item].code_path }}/artisan_current/public"
     state: directory
     group: "{{remote_user}}"
     recurse: true
     owner: "{{ remote_user }}"
+  with_items: "{{sites}}"
 
-- name: "Create a symbolic link for {{domain_name}}"
-  ansible.builtin.file:
-    src: "{{ code_path }}/artisan_current"
-    dest: "{{ code_path }}/current"
-    owner: "{{ remote_user }}"
-    group: "{{ remote_user }}"
-    state: link
+- name: "Create a temporal symbolic link for {{sites[item].domain_name}}"
+  ansible.builtin.shell:
+    cmd: "ls {{ sites[item].code_path }}/current 2> /dev/null || ls -s {{ sites[item].code_path }}/artisan_current {{ sites[item].code_path }}/current"
   notify: restart nginx
+  with_items: "{{sites}}"
 
-- name: write index.html
-  template: src=index.html dest="{{ code_path }}/artisan_current/public/index.html"
+- name: "write index.html in {{sites[item].code_path}}"
+  template:
+    src: index.html
+    dest: "{{ sites[item].code_path }}/artisan_current/public/index.html"
+  with_items: "{{sites}}"
 
 - name: mock artisan
-  template: src=artisan.j2 dest="{{ code_path }}/artisan_current/artisan"
+  template:
+    src: artisan.j2
+    dest: "{{ sites[item].code_path }}/artisan_current/artisan"
+  with_items: "{{sites}}"
 
 - name: Make artisan file executable
   file:
-    path: "{{ code_path }}/current/artisan"
+    path: "{{ sites[item].code_path }}/current/artisan"
     owner: "{{remote_user}}"
     group: "{{remote_user}}"
     mode: "+x"
+  with_items: "{{sites}}"

@@ -1,11 +1,22 @@
 server {
+   listen         80;
+   server_name    {{ sites[item].domain_name }};
+   return         301 https://{{ sites[item].domain_name }}$request_uri;
+}
 
-    listen 80;
-    listen [::]:80;
-    server_name {{domain_name}};
+server {
+
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name {{sites[item].domain_name}};
     server_tokens off;
-    root {{ code_path }}/current/public;
+    root {{ sites[item].code_path }}/current/public;
     charset utf-8;
+
+    ssl_certificate_key /etc/letsencrypt/live/{{sites[item].domain_name}}/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/{{sites[item].domain_name}}/fullchain.pem;
+    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
 
 
 
@@ -24,8 +35,8 @@ server {
     location = /favicon.ico { access_log off; log_not_found off; }
     location = /robots.txt  { access_log off; log_not_found off; }
 
-    access_log /var/log/nginx/{{domain_name}}-access.log;
-    error_log  /var/log/nginx/{{domain_name}}-error.log error;
+    access_log /var/log/nginx/{{sites[item].domain_name}}-access.log;
+    error_log  /var/log/nginx/{{sites[item].domain_name}}-error.log error;
 
     error_page 404 /index.php;
 

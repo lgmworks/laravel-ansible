@@ -1,11 +1,22 @@
 server {
-   listen         80 default_server;
-   server_name    {{ base_domain_name }};
-   return         301 https://{{ domain_name }}$request_uri;
+   listen         80;
+   server_name    {{ sites[item].base_domain_name }};
+   return         301 https://{{ sites[item].domain_name }}$request_uri;
 }
 
 server {
-    listen 80;
-    server_name _;
-    return 301 https://{{ domain_name }}$request_uri;
+   listen         443 ssl;
+   server_name    {{ sites[item].base_domain_name }};
+   ssl_certificate_key /etc/letsencrypt/live/{{sites[item].base_domain_name}}/privkey.pem;
+   ssl_certificate     /etc/letsencrypt/live/{{sites[item].base_domain_name}}/fullchain.pem;
+   ssl_protocols       TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+   ssl_ciphers         HIGH:!aNULL:!MD5;
+
+   return         301 https://{{ sites[item].domain_name }}$request_uri;
 }
+
+#server {
+#    listen 80;
+#    server_name _;
+#    return 301 https://{{ sites[item].domain_name }}$request_uri;
+#}

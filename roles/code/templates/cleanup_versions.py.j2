@@ -20,4 +20,4 @@ def keep_youngest_directories(path, keep_count=5):
             print(f"Failed to delete {directory}: {str(e)}")
 
 # Call the function
-keep_youngest_directories(path="{{code_path}}/versions")
+keep_youngest_directories(path="{{sites[selected_site].code_path}}/versions")

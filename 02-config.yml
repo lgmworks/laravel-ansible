@@ -5,4 +5,4 @@
   remote_user: "{{remote_user}}"
   roles:
     - { role: nginx-config }
-    - { role: mysql-restore }
+    - { role: mysql-restore, when: restore_db }
