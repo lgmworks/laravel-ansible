@@ -21,17 +21,17 @@ certs_email: lgm@lgmworks.com
 
 selected_site: site1
 sites:
-  develop:
-    code_path: "/home/{{ remote_user }}/develop.lgmworks.com"
-    domain_name: develop.lgmworks.com
-    repo_url: git@github.com:lgmworks/laravel-ansible-blank-app.git
+  site1:
+    code_path: "/home/{{ remote_user }}/site1.com"
+    domain_name: site1.com
+    repo_url: git@github.com:your-user/site1.git
     branch: develop
     # eg: my-site.com -> 301 -> www.my-site.com
     base_domain_name:
-  prod:
-    code_path: "/home/{{ remote_user }}/prod.lgmworks.com"
-    domain_name: prod.lgmworks.com
-    repo_url: git@github.com:lgmworks/laravel-ansible-blank-app.git
+  site2:
+    code_path: "/home/{{ remote_user }}/www.site2.com"
+    domain_name: www.site2.com
+    repo_url: git@github.com:your-user/site2.git
     branch: main
     base_domain_name:
 
