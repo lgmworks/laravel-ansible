@@ -1,5 +1,6 @@
 ---
-remote_user: ubuntu
+remote_user: vagrant
+ansible_port: 2200
 remote_group: www-data
 ansible_python_interpreter: /usr/bin/python3
 php_version: 8.3
@@ -19,23 +20,15 @@ restore_db: No
 
 certs_email: you@youremaildomain.com
 
-selected_site: site1
+deploy_domain: example.com
 sites:
-  site1:
-    code_path: "/home/{{ remote_user }}/site1.com"
-    domain_name: site1.com
-    repo_url: git@github.com:your-user/site1.git
-    branch: develop
+  - code_path: "/home/{{ remote_user }}/example.com"
+    domain_name: example.com
+    secure: false
+    repo_url: git@github.com:example/example.git
+    branch: main
     # eg: my-site.com -> 301 -> www.my-site.com
     base_domain_name:
-  site2:
-    code_path: "/home/{{ remote_user }}/www.site2.com"
-    domain_name: www.site2.com
-    repo_url: git@github.com:your-user/site2.git
-    branch: staging
-    base_domain_name:
-
-
 
 
 

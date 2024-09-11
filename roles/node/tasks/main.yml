@@ -1,4 +1,16 @@
 ---
+- name: Set Node.js download URL for ARM64
+  set_fact:
+    nodejs_url: "https://nodejs.org/dist/v21.7.3/node-v21.7.3-linux-arm64.tar.gz"
+    nodejs_folder: "node-v21.7.3-linux-arm64"
+  when: ansible_architecture == "aarch64"
+
+- name: Set Node.js download URL for x64
+  set_fact:
+    nodejs_url: "https://nodejs.org/dist/v21.7.3/node-v21.7.3-linux-x64.tar.gz"
+    nodejs_folder: "node-v21.7.3-linux-x64"
+  when: ansible_architecture == "x86_64"
+
 - name: Install nodejs
   shell:
     cmd: "{{item}}"
@@ -7,10 +19,10 @@
   become: yes
   become_user: "{{remote_user}}"
   with_items:
-    - "wget https://nodejs.org/dist/latest-v21.x/node-v21.7.3-linux-arm64.tar.gz"
-    - "tar -xvzf node-v21.7.3-linux-arm64.tar.gz"
-    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/node /usr/bin/node"
-    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/npm /usr/bin/npm"
+    - "wget {{nodejs_url}}"
+    - "tar -xvzf {{nodejs_folder}}.tar.gz"
+    - "sudo ln -s /home/{{remote_user}}/provision/{{nodejs_folder}}/bin/node /usr/bin/node"
+    - "sudo ln -s /home/{{remote_user}}/provision/{{nodejs_folder}}/bin/npm /usr/bin/npm"
     - "npm install --global yarn"
-    - "sudo ln -s /home/{{remote_user}}/provision/node-v21.7.3-linux-arm64/bin/yarn /usr/bin/yarn"
+    - "sudo ln -s /home/{{remote_user}}/provision/{{nodejs_folder}}/bin/yarn /usr/bin/yarn"
     - "touch 000-node-intalled.txt"

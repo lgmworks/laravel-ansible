@@ -42,6 +42,8 @@
     - "php{{php_version}}-zip"
     - "php{{php_version}}-xml"
     - "php{{php_version}}-bcmath"
+    - "php{{ php_version }}-intl"
+    - "php{{ php_version }}-mailparse"
     - sqlite3
 
 - name: install composer

@@ -10,7 +10,7 @@
 ## Configuration
 
 1. Clone this repository to your local machine.
-2. Create a server in your provider.
+2. Create a server in your cloud provider.
 3. Create an inventory.ini file based on the example and add your server IP there.
 4. Place the server's ssh pem key in the secrets directory and rename it to laravel-ansible.pem.
 5. Install [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html) on your local machine.

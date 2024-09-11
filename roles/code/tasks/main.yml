@@ -1,4 +1,8 @@
 ---
+- name: Set selected_site fact based on deploy_domain
+  set_fact:
+    selected_site: "{{ sites | selectattr('domain_name', 'equalto', deploy_domain) | first }}"
+
 - name: Generate code directory name prefix
   command:
     cmd: date +"%Y-%m-%d_%H-%M-%S"
@@ -10,30 +14,52 @@
 
 - name: Create the versions directory
   ansible.builtin.file:
-    path: "{{sites[selected_site].code_path}}/versions"
+    path: "{{selected_site.code_path}}/versions"
     state: directory
-    recurse: yes
     owner: "{{remote_user}}"
     group: "{{remote_user}}"
 
-- name: delete current directory
-  ansible.builtin.file:
-    path: "{{sites[selected_site].code_path}}/versions/current"
-    state: absent
+#- name: delete current directory
+#  ansible.builtin.file:
+#    path: "{{selected_site.code_path}}/versions/current"
+#    state: absent
+
+- name: Check if the repository directory exists
+  stat:
+    path: "{{ selected_site.code_path }}/versions/current"
+  register: repo_dir
 
 - name: clone the repo
   git:
-    repo: "{{sites[selected_site].repo_url}}"
-    dest: "{{ sites[selected_site].code_path }}/versions/current"
-    version: "{{ sites[selected_site].branch }}"
+    repo: "{{selected_site.repo_url}}"
+    dest: "{{ selected_site.code_path }}/versions/current"
+    version: "{{ selected_site.branch }}"
     accept_hostkey: yes
+    force: yes
   become_user: "{{ remote_user }}"
   become: yes
+
+- name: Set code directory permissions
+  command: "{{ item }}"
+  args:
+    chdir: "{{ selected_site.code_path }}/versions/current"
+  become: yes
+  when: not repo_dir.stat.exists
+  with_items:
+    - "git config core.fileMode false"
+    - "usermod -a -G {{remote_user}} {{ remote_user }}"
+    - "chown -R {{remote_user}}:{{remote_user}} {{ selected_site.code_path }}/versions/current"
+    - "find {{ selected_site.code_path }}/versions/current -type f -exec chmod 664 {} \\;"
+    - "find {{ selected_site.code_path }}/versions/current -type d -exec chmod 755 {} \\;"
+    - "chown -R {{remote_user}}:{{remote_user}} {{ selected_site.code_path }}/versions/current"
+    - "chgrp -R {{remote_user}} storage bootstrap/cache"
+    - "chmod -R ug+rwx storage bootstrap/cache"
+
 
 - name: Extract hash
   command:
     cmd: git log -n 1 --format="%h"
-    chdir: "{{sites[selected_site].code_path}}/versions/current"
+    chdir: "{{selected_site.code_path}}/versions/current"
   register: hash_output
 
 - name: Setting commit_hash variable
@@ -42,30 +68,32 @@
 
 - name: Setting host facts using complex arguments
   ansible.builtin.set_fact:
-    current_path: "{{sites[selected_site].code_path}}/versions/{{date_prefix}}_{{commit_hash}}"
+    current_path: "{{selected_site.code_path}}/versions/{{date_prefix}}_{{commit_hash}}"
 
-- debug: var=commit_hash
+#- debug: var=commit_hash
 
 - name: delete current hash directory
   ansible.builtin.file:
     path: "{{current_path}}"
     state: absent
 
-- name: Rename current to hash
-  shell: "mv {{sites[selected_site].code_path}}/versions/current {{current_path}}"
-  become_user: "{{remote_user}}"
+- name: Copy current to hash preserving permissions
+  shell: "cp -a {{selected_site.code_path}}/versions/current/. {{current_path}}"
+  args:
+    creates: "{{current_path}}"
+  become: yes
 
-- name: "Copy {{selected_site}}_initial_dot_env.j2 to .env, only first time"
+- name: "Copy {{selected_site.domain_name}}_initial_dot_env.j2 to .env, only first time"
   template:
-    src: "{{selected_site}}_initial_dot_env.j2"
-    dest: "{{sites[selected_site].code_path}}/.env"
+    src: "{{selected_site.domain_name}}_initial_dot_env.j2"
+    dest: "{{selected_site.code_path}}/.env"
     force: false
     owner: "{{ remote_user }}"
     group: "{{ remote_user }}"
 
 - name: Create symlink to the .env
   ansible.builtin.file:
-    src: "{{ sites[selected_site].code_path }}/.env"
+    src: "{{ selected_site.code_path }}/.env"
     dest: "{{ current_path }}/.env"
     state: link
   become_user: "{{ remote_user }}"
@@ -74,7 +102,7 @@
 - name: copy the cleanup script
   template:
     src: cleanup_versions.py.j2
-    dest: "{{sites[selected_site].code_path}}/versions/cleanup_versions.py"
+    dest: "{{selected_site.code_path}}/versions/cleanup_versions.py"
     owner: "{{ remote_user }}"
     group: www-data
 
@@ -108,22 +136,6 @@
     append: yes
 
 
-
-- name: Set code directory permissions
-  command: "{{ item }}"
-  args:
-    chdir: "{{current_path}}"
-  become: yes
-  with_items:
-    - "git config core.fileMode false"
-    - "usermod -a -G {{remote_user}} {{ remote_user }}"
-    - "chown -R {{remote_user}}:{{remote_user}} {{ current_path }}"
-    - "find {{ current_path }} -type f -exec chmod 664 {} \\;"
-    - "find {{ current_path }} -type d -exec chmod 755 {} \\;"
-    - "chown -R {{remote_user}}:{{remote_user}} {{ current_path }}"
-    - "chgrp -R {{remote_user}} storage bootstrap/cache"
-    - "chmod -R ug+rwx storage bootstrap/cache"
-
 - name: Migrations and database state
   command:
     cmd: "{{item}}"
@@ -135,7 +147,7 @@
 - name: Create symlink to the commit directory
   ansible.builtin.file:
     src: "{{ current_path }}"
-    dest: "{{ sites[selected_site].code_path }}/current"
+    dest: "{{ selected_site.code_path }}/current"
     state: link
     force: yes
     owner: "{{remote_user}}"
@@ -155,6 +167,6 @@
 
 - name: Cleanup oldest versions
   shell:
-    chdir: "{{ sites[selected_site].code_path }}/versions"
+    chdir: "{{ selected_site.code_path }}/versions"
     cmd: "python3 cleanup_versions.py"
   become: no

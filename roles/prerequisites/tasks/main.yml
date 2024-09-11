@@ -27,6 +27,16 @@
     owner: "{{ remote_user }}"
     group: "{{ remote_user }}"
 
+- name: Set aws-cli url for architecture ARM64
+  set_fact:
+    aws_url: "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
+  when: ansible_architecture == "aarch64"
+
+- name: Set aws-cli url for architecture x64
+  set_fact:
+    aws_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+  when: ansible_architecture == "x86_64"
+
 - name: Install AWS Cli
   shell:
     chdir: "/home/{{ remote_user }}/provision"
@@ -34,7 +44,7 @@
     cmd: "{{ item }}"
   become: Yes
   with_items:
-    - curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    - "curl \"{{aws_url}}\" -o \"awscliv2.zip\""
     - unzip awscliv2.zip
     - ./aws/install --update
     - touch awscli_installed.txt
@@ -64,17 +74,7 @@
   tags:
     - nginx
     - certbot
-    -
-- name: Setup cronjob for renewal
-  cron:
-    name: certbot-renewal
-    job: "/bin/bash -lc '/usr/local/bin/certbot -q renew'"
-    minute: "0"
-    hour: "14"
-  tags:
-    - nginx
-    - certbot
-    -
+
 - name: Setup cronjob for renewal
   cron:
     name: certbot-renewal

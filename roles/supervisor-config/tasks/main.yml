@@ -1,4 +1,8 @@
 ---
+- name: Set selected_site fact based on deploy_domain
+  set_fact:
+    selected_site: "{{ sites | selectattr('domain_name', 'equalto', deploy_domain) | first }}"
+
 - name: Get the configuration files list
   become: false
   shell:

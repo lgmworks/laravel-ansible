@@ -2,6 +2,6 @@
 - name: laravel scheduler crontab entry
   cron:
     name: "Laravel scheduler for {{item}}"
-    job: "/usr/bin/php {{ sites[item].code_path }}/artisan schedule:run >> /dev/null 2>&1"
+    job: "/usr/bin/php {{ item.code_path }}/current/artisan schedule:run >> /dev/null 2>&1"
     user: "{{ remote_user }}"
-  with_items: "{{sites}}"
+  loop: "{{sites}}"

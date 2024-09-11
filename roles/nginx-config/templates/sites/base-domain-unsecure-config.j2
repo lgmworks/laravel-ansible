@@ -1,0 +1,11 @@
+server {
+   listen         80;
+   server_name    {{ item.base_domain_name }};
+   return         301 http://{{ item.domain_name }}$request_uri;
+}
+
+server {
+   listen         80;
+   server_name    {{ item.domain_name }};
+   return         301 $scheme://{{ item.domain_name }}$request_uri;
+}

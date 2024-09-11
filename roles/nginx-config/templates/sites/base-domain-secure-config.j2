@@ -15,8 +15,3 @@ server {
    return         301 https://{{ sites[item].domain_name }}$request_uri;
 }
 
-#server {
-#    listen 80;
-#    server_name _;
-#    return 301 https://{{ sites[item].domain_name }}$request_uri;
-#}
