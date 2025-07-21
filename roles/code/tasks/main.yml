@@ -144,6 +144,23 @@
     - php artisan migrate --force
 #    - php artisan ensure-database-state-is-loaded
 
+- name: Create symlinks for all storage directories
+  ansible.builtin.file:
+    src: "{{ selected_site.code_path }}/storage/app/{{ item }}"
+    dest: "{{ current_path }}/storage/app/{{ item }}"
+    state: link
+    force: yes
+    owner: "{{remote_user}}"
+    group: "{{remote_user}}"
+  loop:
+    - assets
+    - base-assets
+    - pages
+    - payments
+    - products
+    - users
+  become: no
+
 - name: Create symlink to the commit directory
   ansible.builtin.file:
     src: "{{ current_path }}"
@@ -152,15 +169,19 @@
     force: yes
     owner: "{{remote_user}}"
     group: "{{remote_user}}"
-  become: no  
+  become: no
+
+
 
 - name: Queue restart and notify deploy
   command:
     cmd: "{{item}}"
     chdir: "{{ current_path }}"
+  become: no
   with_items:
+    - php artisan storage:link
     - sudo service nginx reload
-    - php artisan optimize 
+    - php artisan optimize
     - php artisan queue:restart
     - "sudo service php{{php_version}}-fpm reload"
     - sudo supervisorctl restart all 
